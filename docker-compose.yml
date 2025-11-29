@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # SERVICE 1: Aplikasi PHP (Backend)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www/html # Sinkronisasi kode lokal ke container
+    networks:
+      - app-network
+
+  # SERVICE 2: Web Server (Nginx)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "8080:80" # Akses dari browser di port 8080
+    volumes:
+      - .:/var/www/html # Sinkronisasi kode agar Nginx bisa melihat file
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+  # SERVICE 3: Database MySQL
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password # Ganti!
+      MYSQL_DATABASE: digital_menu_db  # Ganti dengan nama DB Anda
+    volumes:
+      - dbdata:/var/lib/mysql # Penyimpanan data persisten
+      - ./conn/database/food_menu_db.sql:/docker-entrypoint-initdb.d/init.sql # Import DB awal
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  dbdata:
